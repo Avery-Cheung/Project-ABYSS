@@ -1,0 +1,474 @@
+<!-- START OF FILE index.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Project: ABYSS</title>
+    <style>
+        body,html{margin:0;padding:0;height:100%;overflow:hidden;background:#000;font-family:'宋体',SimSun,Tahoma,sans-serif;user-select:none;}
+        .crt::before{content:" ";display:block;position:absolute;top:0;left:0;bottom:0;right:0;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,0.1) 50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03));z-index:9999;background-size:100% 3px,3px 100%;pointer-events:none;}
+
+        :root{
+            --bg:#008080;--wb:#c0c0c0;--wbl:#dfdfdf;--wbd:#0a0a0a;
+            --tb:linear-gradient(90deg,#000080,#1084d0);--fc:#000;--br:0px;
+        }
+        body.frutiger-mode{
+            --bg:#badc58;--wb:rgba(255,255,255,0.92);--wbl:rgba(255,255,255,0.7);
+            --wbd:rgba(0,0,0,0.15);--tb:linear-gradient(180deg,#b3e5fc,#03a9f4);
+            --fc:#0277bd;--br:12px;
+        }
+        body.frutiger-mode .desktop{background:url('./assets/background.jpg') center/cover no-repeat;}
+
+        .desktop{background:var(--bg);height:calc(100% - 30px);position:relative;overflow:hidden;transition:background 2s;}
+
+        /* ===== 任务栏 ===== */
+        .taskbar{height:30px;background:var(--wb);border-top:2px solid var(--wbl);display:flex;align-items:center;gap:3px;padding:0 4px;position:relative;z-index:9000;overflow:hidden;}
+        .start-btn{background:var(--wb);border:2px solid;border-color:var(--wbl) var(--wbd) var(--wbd) var(--wbl);padding:2px 8px;font-weight:bold;cursor:pointer;font-size:13px;border-radius:var(--br);flex-shrink:0;}
+        .clock{padding:1px 6px;border:2px solid;border-color:var(--wbd) var(--wbl) var(--wbl) var(--wbd);margin-left:auto;font-size:12px;flex-shrink:0;}
+        .tb-win-btn{background:var(--wb);border:2px solid;border-color:var(--wbd) var(--wbl) var(--wbl) var(--wbd);padding:1px 8px;font-size:11px;cursor:pointer;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fc);flex-shrink:0;}
+        .tb-win-btn.active{border-color:var(--wbl) var(--wbd) var(--wbd) var(--wbl);}
+        #tbWins{display:flex;gap:3px;overflow:hidden;flex:1;}
+        #ambBtn{font-size:11px;padding:1px 5px;border:1px solid var(--wbd);background:var(--wb);cursor:pointer;flex-shrink:0;border-radius:var(--br);}
+
+        /* ===== 桌面图标（自动网格，左侧竖排）===== */
+        #iconGrid{position:absolute;top:0;left:0;bottom:0;width:100%;display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;padding:6px 2px;gap:2px;overflow:hidden;}
+        .icon{width:86px;display:flex;flex-direction:column;align-items:center;cursor:pointer;color:#fff;text-shadow:1px 1px 2px #000,-1px -1px 2px #000;font-size:11px;text-align:center;padding:3px 2px;border-radius:2px;box-sizing:border-box;}
+        .icon:hover{background:rgba(255,255,255,0.18);}
+        .icon span{word-break:break-all;line-height:1.2;max-width:82px;}
+        .icon-img{font-size:28px;margin-bottom:2px;filter:drop-shadow(1px 1px 0 rgba(0,0,0,0.5));}
+        body.frutiger-mode .icon{text-shadow:1px 1px 3px rgba(0,0,0,0.95);}
+
+        /* ===== 窗口 ===== */
+        .window{position:absolute;background:var(--wb);border:2px solid;border-color:var(--wbl) var(--wbd) var(--wbd) var(--wbl);display:none;flex-direction:column;box-shadow:4px 4px 12px rgba(0,0,0,0.4);min-width:260px;z-index:100;border-radius:var(--br);resize:both;overflow:auto;min-height:80px;}
+        .title-bar{background:var(--tb);padding:3px 5px;display:flex;justify-content:space-between;align-items:center;color:#fff;font-weight:bold;font-size:13px;cursor:move;border-radius:calc(var(--br) - 2px) calc(var(--br) - 2px) 0 0;flex-shrink:0;gap:4px;}
+        .tb-btns{display:flex;gap:3px;flex-shrink:0;}
+        .wbtn{background:#c0c0c0;border:2px solid;border-color:#fff #000 #000 #fff;width:16px;height:16px;display:flex;justify-content:center;align-items:center;color:#000;font-size:10px;cursor:pointer;flex-shrink:0;}
+        body.frutiger-mode .wbtn{border:none;border-radius:50%;}
+        body.frutiger-mode .wbtn.x{background:#ff5252;color:#fff;}
+        body.frutiger-mode .wbtn.mn{background:#ffb300;color:#fff;}
+        .content{background:#fff;border:2px solid;border-color:var(--wbd) var(--wbl) var(--wbl) var(--wbd);margin:5px;padding:10px;overflow-y:auto;flex-grow:1;font-size:13px;color:var(--fc);}
+        textarea.content{resize:none;width:calc(100% - 24px);}
+
+        /* ===== BIOS ===== */
+        .fst{position:absolute;top:0;left:0;width:100%;height:100%;color:#fff;font-family:'Consolas',monospace;z-index:99999;padding:50px;box-sizing:border-box;}
+        #biosScreen{background:#000080;}
+        .scanline{position:absolute;top:0;left:0;width:100%;height:2px;background:rgba(255,255,255,0.1);animation:scan 2s linear infinite;pointer-events:none;}
+        @keyframes scan{0%{top:0}100%{top:100%}}
+
+        /* ===== Toast通知 ===== */
+        #toastBox{position:fixed;bottom:38px;right:12px;z-index:99998;display:flex;flex-direction:column-reverse;gap:6px;pointer-events:none;max-width:330px;}
+        .toast{background:#1a1a2e;border:1px solid #4a4aff;color:#fff;padding:10px 36px 10px 12px;font-size:12px;font-family:'Consolas',monospace;border-radius:4px;box-shadow:0 2px 14px rgba(0,0,0,0.6);opacity:0;transform:translateX(20px);transition:opacity 0.2s,transform 0.2s;pointer-events:all;line-height:1.55;position:relative;word-break:break-all;}
+        .toast.show{opacity:1;transform:translateX(0);}
+        .toast.err{border-color:#ff4444;}
+        .toast.ok{border-color:#44ff88;}
+        .toast.lore{border-color:#9b59b6;font-style:italic;}
+        .toast.warn{border-color:#ffb300;}
+        .toast .tc{position:absolute;top:6px;right:8px;cursor:pointer;opacity:0.5;font-size:15px;line-height:1;}
+        .toast .tc:hover{opacity:1;}
+        body.frutiger-mode .toast{background:rgba(2,119,189,0.93);border-color:#b3e5fc;}
+
+        /* ===== 结局屏 ===== */
+        #endScreen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:99997;justify-content:center;align-items:center;text-align:center;padding:60px;box-sizing:border-box;overflow:hidden;}
+        #endScreen.e-escape{background:#000;color:#00ff41;font-family:'Consolas',monospace;}
+        #endScreen.e-corporate{background:linear-gradient(135deg,#0d1117,#1c2a3a);color:#ecf0f1;font-family:sans-serif;}
+        #endScreen.e-ascension{background:radial-gradient(ellipse at center,#1a0033,#000);color:#d8b4fe;font-family:serif;}
+        #endScreen.e-hasty{background:#0d0000;color:#ff4444;font-family:'Consolas',monospace;}
+        #endParticles{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;}
+        .e-content{position:relative;z-index:2;max-width:640px;}
+        .e-content h1{font-size:2em;letter-spacing:4px;margin-bottom:20px;}
+        .e-content p{font-size:1.05em;line-height:1.9;margin:10px 0;}
+        .e-content .etag{margin-top:44px;font-size:0.85em;opacity:0.5;letter-spacing:3px;}
+        @keyframes mfall{0%{top:-200px;opacity:0.9}100%{top:115%;opacity:0}}
+        @keyframes brise{0%{bottom:-60px;opacity:0.7}100%{bottom:115%;opacity:0}}
+        @keyframes cscan{0%{top:0}100%{top:100%}}
+        @keyframes glitch{0%,100%{opacity:1}49%{opacity:1}50%{opacity:0.85}51%{opacity:1}}
+
+        /* ===== 开始菜单 ===== */
+        .smenu{position:absolute;bottom:30px;left:0;width:210px;background:var(--wb);border:2px solid;border-color:var(--wbl) var(--wbd) var(--wbd) var(--wbl);display:none;flex-direction:column;z-index:10000;box-shadow:3px 3px 10px rgba(0,0,0,0.3);border-radius:var(--br);}
+        .smenu-side{position:absolute;left:0;top:0;bottom:0;width:28px;background:var(--tb);color:#fff;writing-mode:vertical-rl;transform:rotate(180deg);text-align:right;padding:4px;font-weight:bold;font-size:12px;letter-spacing:2px;}
+        .smenu-items{margin-left:28px;padding:2px;}
+        .smenu-item{padding:7px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--fc);}
+        .smenu-item:hover{background:#000080;color:#fff;}
+        body.frutiger-mode .smenu-item:hover{background:#03a9f4;}
+
+        /* ===== 扫雷 ===== */
+        .mgrid{display:grid;grid-template-columns:repeat(5,30px);gap:2px;margin:8px auto;width:fit-content;}
+        .mcell{width:30px;height:30px;background:#c0c0c0;border:2px solid;border-color:#fff #888 #888 #fff;display:flex;justify-content:center;align-items:center;cursor:pointer;font-weight:bold;font-size:12px;}
+        .mcell.rev{border:1px solid #888;background:#ddd;}
+
+        /* ===== 画图 ===== */
+        #paintCanvas{cursor:crosshair;display:block;}
+        .ptbar{display:flex;gap:4px;padding:4px;background:var(--wb);flex-wrap:wrap;align-items:center;flex-shrink:0;}
+        .cswatch{width:18px;height:18px;border:2px solid;border-color:#fff #888 #888 #fff;cursor:pointer;flex-shrink:0;}
+        .cswatch.act{border-color:#000 #fff #fff #000;}
+
+        /* ===== 计算器 ===== */
+        .cdisp{background:#9abe7d;border:2px inset #888;text-align:right;padding:5px;font-size:20px;font-family:'Consolas',monospace;margin-bottom:5px;}
+        .cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;}
+        .cbtn{background:var(--wb);border:2px solid;border-color:#fff #888 #888 #fff;padding:6px;cursor:pointer;font-size:13px;text-align:center;}
+        .cbtn:active{border-color:#888 #fff #fff #000;}
+        .cbtn.op{background:#c8c8c8;}
+
+        /* ===== 帮助 ===== */
+        .tstep{background:#fffff0;border-left:3px solid #000080;padding:8px;margin:7px 0;font-size:12px;}
+
+        /* ===== format确认弹窗 ===== */
+        #fmtCode{font-family:'Consolas',monospace;font-size:22px;letter-spacing:5px;background:#000;color:#ff4444;padding:8px;text-align:center;margin:8px 0;border-radius:2px;}
+    </style>
+</head>
+<body class="crt">
+
+<!-- BIOS -->
+<div id="biosScreen" class="fst">
+    <div class="scanline"></div>
+    <p>PhoenixBIOS 4.0 Release 6.0</p>
+    <p>Copyright 1985-1998 Phoenix Technologies Ltd.</p>
+    <br>
+    <p>Main Processor: Pentium II 300MHz</p>
+    <p>Memory Test: 65536K OK</p>
+    <br>
+    <p style="color:yellow;">CMOS checksum error - Defaults loaded.</p>
+    <p style="color:yellow;">HDD Locked. Please enter password.</p>
+    <p>HINT: The year it all went wrong.</p>
+    <p>Enter Password: <input type="password" id="biosInput" style="background:transparent;border:none;border-bottom:1px solid #fff;color:#fff;" autofocus onkeydown="checkBios(event)"></p>
+</div>
+
+<!-- 桌面 -->
+<div class="desktop" id="desktop" style="display:none;">
+
+  <!-- 图标网格 -->
+  <div id="iconGrid">
+    <!-- Win98阶段 -->
+    <div class="icon" id="ico_brief" onclick="openWin('notepadWin','任务简报.txt',gameData.texts.missionBrief)"><div class="icon-img">📝</div><span>任务简报.txt</span></div>
+    <div class="icon" id="ico_comp" onclick="openExplorer('My Computer')"><div class="icon-img">💻</div><span>我的电脑</span></div>
+    <div class="icon" id="ico_recycle" onclick="openWin('recycleWin')"><div class="icon-img">🗑️</div><span>回收站</span></div>
+    <div class="icon" id="ico_srec" onclick="openWin('soundRecWin')"><div class="icon-img">🎤</div><span>录音机</span></div>
+    <div class="icon" id="ico_net" onclick="openWin('netWin')"><div class="icon-img">🌍</div><span>网络连接</span></div>
+    <div class="icon" id="ico_pet1" onclick="openWin('petWin')"><div class="icon-img">👾</div><span>电子宠物.exe</span></div>
+    <div class="icon" id="ico_paint" onclick="openWin('paintWin')"><div class="icon-img">🖌️</div><span>画图.exe</span></div>
+    <div class="icon" id="ico_calc" onclick="openWin('calcWin')"><div class="icon-img">🔢</div><span>计算器</span></div>
+    <div class="icon" id="ico_imgtut" onclick="openWin('imgTutWin')"><div class="icon-img">📖</div><span>图片读取.hlp</span></div>
+    <!-- 装饰文件 -->
+    <div class="icon" id="ico_pay" onclick="openWin('notepadWin','工资单_1999_10.txt',gameData.texts.payslip)"><div class="icon-img">💰</div><span>工资单_10月.txt</span></div>
+    <div class="icon" id="ico_leave" onclick="openWin('notepadWin','休假申请.txt',gameData.texts.leaveReq)"><div class="icon-img">📄</div><span>休假申请.txt</span></div>
+    <div class="icon" id="ico_meet" onclick="openWin('notepadWin','会议纪要_9月.txt',gameData.texts.meetingNote)"><div class="icon-img">📋</div><span>会议纪要.txt</span></div>
+    <div class="icon" id="ico_shop" onclick="openWin('notepadWin','购物清单.txt',gameData.texts.shoppingList)"><div class="icon-img">🛒</div><span>购物清单.txt</span></div>
+    <div class="icon" id="ico_readme" onclick="openWin('notepadWin','README.txt',gameData.texts.readme)"><div class="icon-img">❓</div><span>README.txt</span></div>
+    <div class="icon" id="ico_pwdnote" onclick="openWin('notepadWin','密码备忘.txt',gameData.texts.passwordNote)"><div class="icon-img">🔏</div><span>密码备忘.txt</span></div>
+    <div class="icon" id="ico_errlog" onclick="openWin('notepadWin','错误日志.log',gameData.texts.errorLog)"><div class="icon-img">⚠️</div><span>错误日志.log</span></div>
+    <div class="icon" id="ico_mom" onclick="openWin('notepadWin','来自妈妈的信.txt',gameData.texts.momLetter)"><div class="icon-img">✉️</div><span>来自妈妈的信.txt</span></div>
+    <div class="icon" id="ico_faq" onclick="openWin('notepadWin','Terra_FAQ.txt',gameData.texts.faq)"><div class="icon-img">📰</div><span>Terra_FAQ.txt</span></div>
+    <div class="icon" id="ico_sys" onclick="openWin('notepadWin','系统报告_draft.txt',gameData.texts.sysReport)"><div class="icon-img">📊</div><span>系统报告_draft.txt</span></div>
+    <!-- Aero阶段（初始隐藏）-->
+    <div class="icon" id="firewallIcon" style="display:none;" onclick="openWin('firewallWin')"><div class="icon-img">🛡️</div><span>防火墙</span></div>
+    <div class="icon" id="surveyIcon" style="display:none;" onclick="openSurvey()"><div class="icon-img">📋</div><span>心理评估</span></div>
+    <div class="icon" id="colorIcon" style="display:none;" onclick="openWin('colorWin')"><div class="icon-img">🎨</div><span>色彩校准</span></div>
+    <div class="icon" id="taskMgrIcon" style="display:none;" onclick="openTaskMgr()"><div class="icon-img">📊</div><span>任务管理器</span></div>
+    <div class="icon" id="photoIcon" style="display:none;" onclick="openImage('Ling.png','./assets/Ling.png')"><div class="icon-img">🖼️</div><span>Ling.png</span></div>
+    <div class="icon" id="diary3Icon" style="display:none;" onclick="openWin('notepadWin','日记_关于蝴蝶.txt',gameData.texts.diary3)"><div class="icon-img">📝</div><span>日记_关于蝴蝶.txt</span></div>
+    <div class="icon" id="diary4Icon" style="display:none;" onclick="openWin('notepadWin','日记_大海的味道.txt',gameData.texts.diary4)"><div class="icon-img">📝</div><span>日记_大海的味道.txt</span></div>
+    <div class="icon" id="abyssHintIcon" style="display:none;" onclick="openWin('notepadWin','system_echo.log',gameData.texts.abyssHint)"><div class="icon-img">🌊</div><span>system_echo.log</span></div>
+    <div class="icon" id="resonanceIcon" style="display:none;" onclick="openWin('resonanceWin')"><div class="icon-img">📡</div><span>意识共振仪</span></div>
+    <div class="icon" id="dosIcon" style="display:none;" onclick="openDos()"><div class="icon-img">🖥️</div><span>MS-DOS</span></div>
+    <div class="icon" id="assetPackagerIcon" style="display:none;" onclick="openWin('packagerWin')"><div class="icon-img">📦</div><span>资产打包工具</span></div>
+    <div class="icon" id="petIcon" style="display:none;" onclick="openWin('petWin')"><div class="icon-img">👾</div><span>电子宠物.exe</span></div>
+    <div class="icon" id="mineIcon" style="display:none;" onclick="openWin('mineWin')"><div class="icon-img">💣</div><span>扫雷_内部版</span></div>
+    <div class="icon" id="finalSyncIcon" style="display:none;" onclick="runFinalSync()"><div class="icon-img">🔄</div><span>最终同步</span></div>
+  </div>
+
+  <!-- =============== 窗口区 =============== -->
+
+  <!-- 记事本 -->
+  <div class="window" id="notepadWin" style="width:500px;height:420px;">
+    <div class="title-bar"><span>记事本</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('notepadWin','notepadWin')">_</div><div class="wbtn x" onclick="closeWin('notepadWin')">X</div></div></div>
+    <textarea class="content" id="notepadContent" style="font-family:'Consolas',monospace;font-size:12px;line-height:1.6;"></textarea>
+    <div style="background:var(--wb);padding:3px 6px;border-top:1px solid var(--wbd);flex-shrink:0;text-align:right;"><button onclick="saveFile()">保存</button></div>
+  </div>
+
+  <!-- 资源管理器 -->
+  <div class="window" id="explorerWin" style="width:480px;height:380px;">
+    <div class="title-bar"><span id="explorerTitle">My Computer</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('explorerWin','explorerWin')">_</div><div class="wbtn x" onclick="closeWin('explorerWin')">X</div></div></div>
+    <div style="padding:3px 5px;border-bottom:1px solid #ccc;display:flex;gap:6px;background:var(--wb);flex-shrink:0;">
+      <button onclick="goUp()">⬆ 上级</button>
+      <span id="explorerPath" style="padding:1px 4px;background:#fff;border:1px inset #888;flex-grow:1;font-size:11px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+    </div>
+    <ul id="explorerList" class="content" style="list-style:none;padding:0;cursor:pointer;margin:0;border-radius:0;"></ul>
+  </div>
+
+  <!-- 图片查看器 -->
+  <div class="window" id="imageViewerWin" style="width:440px;height:480px;">
+    <div class="title-bar"><span>图片查看器</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('imageViewerWin','imageViewerWin')">_</div><div class="wbtn x" onclick="closeWin('imageViewerWin')">X</div></div></div>
+    <div class="content" style="background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;">
+      <img id="imageViewImg" src="" alt="" style="max-width:100%;max-height:90%;display:block;">
+      <p id="imageLoadStatus" style="color:#888;font-family:monospace;font-size:11px;margin:6px 0 0;"></p>
+    </div>
+  </div>
+
+  <!-- 图片读取帮助 -->
+  <div class="window" id="imgTutWin" style="width:460px;height:380px;">
+    <div class="title-bar"><span>📖 图片读取帮助文档</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('imgTutWin','imgTutWin')">_</div><div class="wbtn x" onclick="closeWin('imgTutWin')">X</div></div></div>
+    <div class="content" style="overflow-y:auto;font-size:12px;">
+      <h3 style="color:#000080;margin-top:0;">如何读取图片？</h3>
+      <div class="tstep"><b>方法一：相对路径（推荐）</b><br>将图片放在 <code>assets/</code> 目录，用 Firefox 或本地服务器打开即可。</div>
+      <div class="tstep"><b>方法二：FileReader API（无需服务器）</b><br>通过「显示属性」上传本地图片，系统用 FileReader 转为 Base64，完全绕过跨域限制。<pre style="background:#eee;padding:4px;font-size:10px;">const r=new FileReader();
+r.onload=e=>{img.src=e.target.result};
+r.readAsDataURL(file);</pre></div>
+      <div class="tstep"><b>图片全黑的原因</b><br>Chrome 在 file:// 协议下会拦截相对路径图片。改用 Firefox 即可直接双击打开。</div>
+    </div>
+  </div>
+
+  <!-- 录音机 -->
+  <div class="window" id="soundRecWin" style="width:300px;height:185px;">
+    <div class="title-bar"><span>录音机</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('soundRecWin','soundRecWin')">_</div><div class="wbtn x" onclick="closeWin('soundRecWin')">X</div></div></div>
+    <div class="content" style="text-align:center;">
+      <p style="margin:4px 0;">当前文件: <span id="audioFileName">无</span></p>
+      <div id="audioDisplay" style="font-family:monospace;background:#111;color:#0f0;padding:10px;min-height:28px;margin:8px 0;letter-spacing:4px;font-size:15px;"></div>
+      <button onclick="reverseAudio()">▶ 倒放</button>
+    </div>
+  </div>
+
+  <!-- 回收站 -->
+  <div class="window" id="recycleWin" style="width:360px;height:200px;">
+    <div class="title-bar"><span>回收站</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('recycleWin','recycleWin')">_</div><div class="wbtn x" onclick="closeWin('recycleWin')">X</div></div></div>
+    <div class="content" id="recycleContent">
+      <p style="color:red;">⚠ 回收站已损坏。文件系统可能存在错误。</p>
+      <button onclick="runChkdsk()">运行 CHKDSK /F 修复</button>
+    </div>
+  </div>
+
+  <!-- 防火墙 -->
+  <div class="window" id="firewallWin" style="width:420px;height:290px;">
+    <div class="title-bar"><span>Terra Corp Firewall v3.1</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('firewallWin','firewallWin')">_</div><div class="wbtn x" onclick="closeWin('firewallWin')">X</div></div></div>
+    <div class="content" style="font-size:13px;">
+      <p>Status: <span id="fwStatus" style="color:red;font-weight:bold;">ACTIVE — 所有本地文件修改已被拦截</span></p>
+      <hr>
+      <p style="color:#555;font-size:12px;margin:4px 0;">输入例外代码以允许本机系统文件写入。</p>
+      <p style="color:#888;font-size:11px;margin:4px 0;">格式提示：<b>英文名</b> + <b>德语"自由"</b> + <b>生日(MMDD)</b>，全部大写，直接拼接，无分隔符。</p>
+      <p style="color:#888;font-size:11px;margin:4px 0 10px;">（"自由"的德语怎么拼？也许备忘录里有。她的生日是几月几日？日记里写了。）</p>
+      <input type="text" id="firewallCode" style="width:100%;box-sizing:border-box;font-family:monospace;" placeholder="例外代码">
+      <button onclick="addFirewallRule()" style="margin-top:8px;">Add Exception Rule</button>
+    </div>
+  </div>
+
+  <!-- 心理评估 -->
+  <div class="window" id="surveyWin" style="width:480px;height:320px;">
+    <div class="title-bar"><span>Corporate Wellness Survey v2.0</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('surveyWin','surveyWin')">_</div><div class="wbtn x" onclick="closeWin('surveyWin')">X</div></div></div>
+    <div class="content" id="surveyContent" style="text-align:center;"></div>
+  </div>
+
+  <!-- 色彩校准 -->
+  <div class="window" id="colorWin" style="width:360px;height:320px;">
+    <div class="title-bar"><span>Display Calibration Tool</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('colorWin','colorWin')">_</div><div class="wbtn x" onclick="closeWin('colorWin')">X</div></div></div>
+    <div class="content" style="font-size:13px;">
+      <p style="margin:0 0 8px;">Calibrate to Terra Corporate Standard™</p>
+      <div style="margin:4px 0;">R <input type="range" id="rVal" min="0" max="255" value="128" oninput="updateColorPreview()" style="width:75%;"></div>
+      <div style="margin:4px 0;">G <input type="range" id="gVal" min="0" max="255" value="128" oninput="updateColorPreview()" style="width:75%;"></div>
+      <div style="margin:4px 0;">B <input type="range" id="bVal" min="0" max="255" value="128" oninput="updateColorPreview()" style="width:75%;"></div>
+      <div style="display:flex;gap:4px;margin-top:10px;align-items:center;">
+        <div style="flex:1;text-align:center;font-size:11px;color:#888;">你的颜色</div>
+        <div id="colorPreview" style="width:60px;height:32px;border:1px solid #000;background:rgb(128,128,128);"></div>
+        <div id="targetColorBox" style="width:60px;height:32px;border:1px solid #000;"></div>
+        <div style="flex:1;text-align:center;font-size:11px;color:#888;">目标颜色</div>
+      </div>
+      <p id="colorStatus" style="font-size:11px;min-height:16px;margin:8px 0;"></p>
+      <button onclick="checkColor()">Confirm Calibration</button>
+    </div>
+  </div>
+
+  <!-- 资产打包 -->
+  <div class="window" id="packagerWin" style="width:400px;height:220px;">
+    <div class="title-bar"><span>Asset Packager v1.0</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('packagerWin','packagerWin')">_</div><div class="wbtn x" onclick="closeWin('packagerWin')">X</div></div></div>
+    <div class="content" style="font-size:13px;">
+      <p>Ready to package asset <b>"LING_CORE"</b>.</p>
+      <p style="color:#888;font-size:11px;margin:4px 0;">Enter project authorization key:</p>
+      <input type="password" id="packageKey" style="width:100%;box-sizing:border-box;font-family:monospace;">
+      <button onclick="packageAsset()" style="margin-top:10px;width:100%;">Package &amp; Upload</button>
+    </div>
+  </div>
+
+  <!-- DOS -->
+  <div class="window" id="dosWin" style="width:620px;height:420px;background:#000;">
+    <div class="title-bar" style="background:#222;"><span id="dosTitle">MS-DOS — C:\</span><div class="tb-btns"><div class="wbtn mn" style="background:#555;color:#fff;" onclick="minimizeWin('dosWin','dosWin')">_</div><div class="wbtn x" style="background:#800;color:#fff;" onclick="closeWin('dosWin')">X</div></div></div>
+    <div class="content" id="dosOutput" style="background:#000;color:#ccc;font-family:'Consolas',monospace;padding:8px;" onclick="document.getElementById('dosCmd').focus()">
+      <div id="dosHistory">Microsoft(R) TerraDOS(TM)<br>(C) Copyright Terra Corp 1998.<br><br></div>
+      <span id="dosPrompt">C:\&gt;</span><input type="text" id="dosCmd" style="background:transparent;border:none;color:#fff;width:80%;outline:none;font-family:'Consolas',monospace;" onkeydown="handleDos(event)" autocomplete="off">
+    </div>
+  </div>
+
+  <!-- 网络 -->
+  <div class="window" id="netWin" style="width:310px;height:200px;">
+    <div class="title-bar"><span>网络连接</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('netWin','netWin')">_</div><div class="wbtn x" onclick="closeWin('netWin')">X</div></div></div>
+    <div class="content" style="font-size:13px;">
+      <table style="width:100%;border-collapse:collapse;"><tr><td style="padding:4px;">IP:</td><td><input type="text" id="netIP" style="width:100%;box-sizing:border-box;font-family:monospace;"></td></tr><tr><td style="padding:4px;">Port:</td><td><input type="text" id="netPort" style="width:100%;box-sizing:border-box;font-family:monospace;"></td></tr></table>
+      <button onclick="connectNet()" style="margin-top:12px;width:100%;">连接</button>
+    </div>
+  </div>
+
+  <!-- 任务管理器 -->
+  <div class="window" id="taskMgrWin" style="width:420px;height:310px;">
+    <div class="title-bar"><span>任务管理器</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('taskMgrWin','taskMgrWin')">_</div><div class="wbtn x" onclick="closeWin('taskMgrWin')">X</div></div></div>
+    <div class="content" style="padding:0;margin:0;border:none;"><table id="processList" style="width:100%;border-collapse:collapse;font-size:12px;"></table></div>
+  </div>
+
+  <!-- 密码输入 -->
+  <div class="window" id="passwordWin" style="width:290px;height:160px;z-index:9999;">
+    <div class="title-bar"><span id="passwordTitle">Password Required</span><div class="tb-btns"><div class="wbtn x" onclick="closeWin('passwordWin')">X</div></div></div>
+    <div class="content" style="text-align:center;">
+      <p id="passwordPromptText" style="font-size:12px;margin:4px 0;"></p>
+      <input type="password" id="passwordInput" style="width:90%;box-sizing:border-box;" onkeydown="if(event.key==='Enter')document.getElementById('passwordSubmit').click()">
+      <br><br>
+      <button id="passwordSubmit">确认</button>
+      <button onclick="closeWin('passwordWin')">取消</button>
+    </div>
+  </div>
+
+  <!-- 显示属性 -->
+  <div class="window" id="displayWin" style="width:290px;height:185px;">
+    <div class="title-bar"><span>显示属性</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('displayWin','displayWin')">_</div><div class="wbtn x" onclick="closeWin('displayWin')">X</div></div></div>
+    <div class="content" style="text-align:center;font-size:13px;">
+      <p>选择自定义壁纸：</p>
+      <input type="file" id="wallpaperInput" accept="image/*" style="margin-bottom:10px;"><br>
+      <button onclick="applyWallpaper()">应用</button>
+      <button onclick="resetWallpaper()">恢复默认</button>
+    </div>
+  </div>
+
+  <!-- 电子宠物 -->
+  <div class="window" id="petWin" style="width:260px;height:295px;">
+    <div class="title-bar"><span>PixelPet v1.0</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('petWin','petWin')">_</div><div class="wbtn x" onclick="closeWin('petWin')">X</div></div></div>
+    <div class="content" style="text-align:center;background:#9ebd9e;">
+      <div id="petFace" style="font-size:50px;margin:14px 0;transition:all 0.5s;">(° ~ °)</div>
+      <p style="margin:3px 0;font-size:12px;">状态: <span id="petStatus">它看着很孤单。</span></p>
+      <p style="margin:3px 0;font-size:12px;">饱食度: <span id="petHunger">50</span>% &nbsp; 心情: <span id="petMoodDisplay">50</span>%</p>
+      <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;">
+        <button onclick="feedPet()">🍎 喂食</button>
+        <button onclick="playPet()">💙 安抚</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 扫雷 -->
+  <div class="window" id="mineWin" style="width:230px;height:285px;">
+    <div class="title-bar"><span>Terra扫雷</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('mineWin','mineWin')">_</div><div class="wbtn x" onclick="closeWin('mineWin')">X</div></div></div>
+    <div class="content">
+      <div style="text-align:center;margin-bottom:4px;font-size:12px;">未知区域: <span id="mineCount">?</span></div>
+      <div id="mineGrid" class="mgrid"></div>
+      <div style="text-align:center;margin-top:8px;"><button onclick="initMinesweeper()">重置</button></div>
+    </div>
+  </div>
+
+  <!-- 画图 -->
+  <div class="window" id="paintWin" style="width:420px;height:370px;">
+    <div class="title-bar"><span>🎨 画图.exe</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('paintWin','paintWin')">_</div><div class="wbtn x" onclick="closeWin('paintWin')">X</div></div></div>
+    <div class="ptbar">
+      <span style="font-size:11px;">色:</span>
+      <div class="cswatch act" style="background:#000;" onclick="selectPaintColor('#000',this)"></div>
+      <div class="cswatch" style="background:#fff;border:1px solid #aaa;" onclick="selectPaintColor('#fff',this)"></div>
+      <div class="cswatch" style="background:red;" onclick="selectPaintColor('red',this)"></div>
+      <div class="cswatch" style="background:#1565c0;" onclick="selectPaintColor('#1565c0',this)"></div>
+      <div class="cswatch" style="background:#008080;" onclick="selectPaintColor('#008080',this)"></div>
+      <div class="cswatch" style="background:#badc58;" onclick="selectPaintColor('#badc58',this)"></div>
+      <div class="cswatch" style="background:#9b59b6;" onclick="selectPaintColor('#9b59b6',this)"></div>
+      <span style="font-size:11px;margin-left:4px;">笔:</span>
+      <input type="range" id="brushSize" min="1" max="20" value="4" style="width:50px;">
+      <button onclick="clearCanvas()" style="font-size:11px;margin-left:4px;">清除</button>
+    </div>
+    <div class="content" style="padding:0;margin:0;background:#fff;overflow:hidden;flex-grow:1;">
+      <canvas id="paintCanvas" width="410" height="280" style="width:100%;height:100%;display:block;"></canvas>
+    </div>
+  </div>
+
+  <!-- 计算器 -->
+  <div class="window" id="calcWin" style="width:225px;height:300px;">
+    <div class="title-bar"><span>🔢 计算器</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('calcWin','calcWin')">_</div><div class="wbtn x" onclick="closeWin('calcWin')">X</div></div></div>
+    <div class="content" style="padding:8px;">
+      <div class="cdisp" id="calcDisplay">0</div>
+      <div class="cgrid">
+        <button class="cbtn op" onclick="calcInput('C')" style="grid-column:span 2;">C</button>
+        <button class="cbtn op" onclick="calcInput('/')">÷</button>
+        <button class="cbtn op" onclick="calcInput('*')">×</button>
+        <button class="cbtn" onclick="calcInput('7')">7</button><button class="cbtn" onclick="calcInput('8')">8</button><button class="cbtn" onclick="calcInput('9')">9</button>
+        <button class="cbtn op" onclick="calcInput('-')">-</button>
+        <button class="cbtn" onclick="calcInput('4')">4</button><button class="cbtn" onclick="calcInput('5')">5</button><button class="cbtn" onclick="calcInput('6')">6</button>
+        <button class="cbtn op" onclick="calcInput('+')">+</button>
+        <button class="cbtn" onclick="calcInput('1')">1</button><button class="cbtn" onclick="calcInput('2')">2</button><button class="cbtn" onclick="calcInput('3')">3</button>
+        <button class="cbtn op" onclick="calcInput('=')" style="grid-row:span 2;">=</button>
+        <button class="cbtn" onclick="calcInput('0')" style="grid-column:span 2;">0</button>
+        <button class="cbtn" onclick="calcInput('.')">.</button>
+      </div>
+      <p id="calcHint" style="font-size:10px;color:#880000;text-align:center;margin-top:5px;min-height:14px;font-family:'Consolas',monospace;"></p>
+    </div>
+  </div>
+
+  <!-- 意识共振仪 -->
+  <div class="window" id="resonanceWin" style="width:390px;height:350px;">
+    <div class="title-bar"><span>📡 意识共振仪 v0.9β</span><div class="tb-btns"><div class="wbtn mn" onclick="minimizeWin('resonanceWin','resonanceWin')">_</div><div class="wbtn x" onclick="closeWin('resonanceWin')">X</div></div></div>
+    <div class="content" style="font-size:13px;">
+      <p style="color:#880000;font-style:italic;margin:0 0 4px;">「调整三个频道至深渊谐振频率，与她同步。」</p>
+      <p style="font-size:11px;color:#666;margin:0 0 10px;">线索：见 system_echo.log</p>
+      <div style="margin:6px 0;display:flex;align-items:center;gap:8px;"><span style="width:40px;font-size:12px;">α波段</span><input type="range" id="alphaFreq" min="0" max="99" value="0" oninput="updateResonance()" style="flex-grow:1;"><span id="alphaVal" style="width:24px;font-family:monospace;font-size:12px;">0</span></div>
+      <div style="margin:6px 0;display:flex;align-items:center;gap:8px;"><span style="width:40px;font-size:12px;">β波段</span><input type="range" id="betaFreq" min="0" max="99" value="0" oninput="updateResonance()" style="flex-grow:1;"><span id="betaVal" style="width:24px;font-family:monospace;font-size:12px;">0</span></div>
+      <div style="margin:6px 0;display:flex;align-items:center;gap:8px;"><span style="width:40px;font-size:12px;">γ波段</span><input type="range" id="gammaFreq" min="0" max="99" value="0" oninput="updateResonance()" style="flex-grow:1;"><span id="gammaVal" style="width:24px;font-family:monospace;font-size:12px;">0</span></div>
+      <div id="resonanceBar" style="height:22px;background:#eee;border:1px solid #888;margin:10px 0;position:relative;overflow:hidden;border-radius:2px;">
+        <div id="resonanceFill" style="height:100%;width:0%;background:linear-gradient(90deg,#000080,#9b59b6);transition:width 0.3s;"></div>
+        <span id="resonanceLabel" style="position:absolute;top:3px;left:50%;transform:translateX(-50%);font-size:11px;font-family:monospace;pointer-events:none;">谐振率: 0%</span>
+      </div>
+      <p id="resonanceStatus" style="color:#888;font-size:12px;min-height:16px;margin:0 0 8px;"></p>
+      <button onclick="checkResonance()">尝试同步</button>
+    </div>
+  </div>
+
+  <!-- format C: 确认窗口 -->
+  <div class="window" id="formatConfirmWin" style="width:370px;height:255px;z-index:9998;">
+    <div class="title-bar" style="background:linear-gradient(90deg,#8b0000,#c0392b);"><span>⚠ 危险操作确认</span><div class="tb-btns"><div class="wbtn x" style="background:#600;color:#fff;" onclick="closeWin('formatConfirmWin')">X</div></div></div>
+    <div class="content" style="font-size:12px;text-align:center;">
+      <p style="color:red;font-weight:bold;margin:4px 0;">警告：此操作将永久销毁服务器全部数据，包括 LING_CORE。</p>
+      <p style="color:#555;margin:4px 0;">请原样输入以下验证码以确认：</p>
+      <div id="fmtCode" style="font-family:'Consolas',monospace;font-size:22px;letter-spacing:5px;background:#000;color:#ff4444;padding:8px;margin:8px 0;border-radius:2px;"></div>
+      <input type="text" id="fmtInput" placeholder="输入验证码" style="width:88%;box-sizing:border-box;font-family:monospace;letter-spacing:2px;text-align:center;">
+      <br><br>
+      <button onclick="confirmFormat()" style="background:#c0392b;color:#fff;border:none;padding:4px 16px;cursor:pointer;border-radius:2px;">确认格式化</button>
+      <button onclick="closeWin('formatConfirmWin')" style="margin-left:8px;">取消</button>
+    </div>
+  </div>
+
+</div><!-- /desktop -->
+
+<!-- Toast容器 -->
+<div id="toastBox"></div>
+
+<!-- 开始菜单 -->
+<div class="smenu" id="startMenu">
+  <div class="smenu-side" id="smLabel">Windows 98</div>
+  <div class="smenu-items">
+    <div class="smenu-item" onclick="openExplorer('My Computer');toggleStartMenu();">💻 我的电脑</div>
+    <div class="smenu-item" onclick="openWin('notepadWin','任务简报.txt',gameData.texts.missionBrief);toggleStartMenu();">📝 任务简报</div>
+    <hr style="border-top:1px solid var(--wbd);border-bottom:1px solid var(--wbl);margin:2px 0;">
+    <div class="smenu-item" onclick="openWin('displayWin');toggleStartMenu();">🖼️ 个性化设置</div>
+    <div class="smenu-item" onclick="openWin('imgTutWin');toggleStartMenu();">📖 图片读取帮助</div>
+    <hr style="border-top:1px solid var(--wbd);border-bottom:1px solid var(--wbl);margin:2px 0;">
+    <div class="smenu-item" onclick="showLogoutBlocked();toggleStartMenu();">🔑 注销...</div>
+    <div class="smenu-item" onclick="fakeShutdown();toggleStartMenu();">⏻ 关闭系统...</div>
+  </div>
+</div>
+
+<!-- 任务栏 -->
+<div class="taskbar" id="taskbar" style="display:none;">
+  <div class="start-btn" onclick="toggleStartMenu()" id="startBtn">▶ 开始</div>
+  <div id="tbWins"></div>
+  <button id="ambBtn" onclick="toggleAmb()" title="环境音">🔇 环境音</button>
+  <div class="clock" id="clock"></div>
+</div>
+
+<!-- 结局屏 -->
+<div id="endScreen"></div>
+
+<script src="game.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+    initDragAndDrop();
+    document.getElementById('biosInput').focus();
+});
+</script>
+</body>
+</html>
