@@ -31,7 +31,7 @@ function loadState() {
 const gameData = {
     passwords: {
         bios: "1999",
-        firewall: "LING_FREI_8809",
+        firewall: "LINGFREI0908",
         asset: "Abyss",
         fatherLog2: "0908"
     },
