@@ -518,11 +518,12 @@ function checkBios(e) {
         document.getElementById('biosScreen').style.display='none';
         document.getElementById('desktop').style.display='block';
         document.getElementById('taskbar').style.display='flex';
-        State.stage='win98';
+        loadProgress(); // 读取存档恢复桌面状态（内部会设置正确的stage）
+        // 若存档中无记录，确保stage至少为win98
+        if (State.stage === 'bios') State.stage = 'win98';
         initMinesweeper();
         startPetTimer();
-        startAmb(false);
-        loadProgress(); // 读取存档恢复桌面状态
+        startAmb(State.stage === 'aero');
         saveState();
     } else {
         playErrorSound();
@@ -536,12 +537,26 @@ function loadProgress() {
     loadState();
     if (State.stage === 'aero') {
         document.body.classList.add('frutiger-mode');
+        // 隐藏仅属于第一阶段的装饰性图标
+        ['ico_pet1','ico_paint','ico_calc','ico_imgtut'].forEach(id=>{
+            const e=document.getElementById(id); if(e) e.style.display='none';
+        });
         showAeroIcons();
+        const sm=document.getElementById('smLabel'); if(sm) sm.textContent='Terra OS';
     }
     if (State.chkdskRun) {
         // 回收站恢复修复状态
         const rc = document.getElementById('recycleContent');
         if(rc) rc.innerHTML='<p style="color:green;">✓ CHKDSK 已运行，文件系统已修复。</p>';
+        // 恢复日记残片_1图标
+        const existing = document.getElementById('diary1Icon');
+        if (!existing) {
+            const ico=document.createElement('div');
+            ico.className='icon'; ico.id='diary1Icon'; ico.style.cssText='display:flex;';
+            ico.innerHTML='<div class="icon-img">📝</div><span>日记残片_1.txt</span>';
+            ico.onclick=()=>openWin('notepadWin','日记残片_1.txt',gameData.texts.diary1);
+            document.getElementById('iconGrid').appendChild(ico);
+        }
     }
     if (State.resonanceSynced || State.surveyPassed || State.colorSynced || State.viewedPhoto) {
         checkAbyssPuzzles(true); // silent mode

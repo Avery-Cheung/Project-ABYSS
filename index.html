@@ -465,10 +465,7 @@ r.readAsDataURL(file);</pre></div>
 
 <script src="game.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded',()=>{
-    initDragAndDrop();
-    document.getElementById('biosInput').focus();
-});
+// biosInput 焦点由 game.js 的 load 事件统一处理，此处不重复调用
 </script>
 </body>
 </html>
