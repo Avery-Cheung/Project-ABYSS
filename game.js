@@ -1152,7 +1152,7 @@ function calcInput(v){
             const result=Function('"use strict";return('+safe+')')();
             disp.textContent=result;
             hint.textContent='';
-            if(Math.round(result)===1999){
+            if(Math.round(result)===3998){
                 playHorrorSound();
                 hint.textContent='「1999年...那一年她消失了。」';
                 toastLore('计算器显示：1999\n\n「那一年，爸爸算了很多次这个数字。\n 1999+1999=3998...但她只有一个1999。」',8000);
