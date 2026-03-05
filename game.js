@@ -1,3 +1,5 @@
+--- START OF FILE text/javascript ---
+
 // ==================== STATE & DATA ====================
 const State = {
     stage: 'bios',
@@ -531,19 +533,41 @@ function checkBios(e) {
     }
 }
 
+// ==================== 桌面阶段切换与恢复 ====================
+// 隐藏无需在第二阶段（Aero）显示的第一阶段图标
+function hideWin98Icons() {
+    const keepIcons = ['ico_brief','ico_comp','ico_recycle','ico_srec','ico_net', 'ico_diary1'];
+    document.querySelectorAll('#iconGrid .icon').forEach(i => {
+        if (i.id && i.id.startsWith('ico_') && !keepIcons.includes(i.id)) {
+            i.style.display = 'none';
+        }
+    });
+}
+
 // 恢复存档时的桌面状态
 function loadProgress() {
     loadState();
     if (State.stage === 'aero') {
         document.body.classList.add('frutiger-mode');
         showAeroIcons();
+        hideWin98Icons(); // 刷新恢复时也要正确隐藏无关图标
+        const sm=document.getElementById('smLabel'); if(sm) sm.textContent='Terra OS';
     }
     if (State.chkdskRun) {
         // 回收站恢复修复状态
         const rc = document.getElementById('recycleContent');
         if(rc) rc.innerHTML='<p style="color:green;">✓ CHKDSK 已运行，文件系统已修复。</p>';
+        // 恢复日记残片_1.txt 图标（若未创建）
+        if (!document.getElementById('ico_diary1')) {
+            const ico=document.createElement('div');
+            ico.id = 'ico_diary1';
+            ico.className='icon'; ico.style.cssText='display:flex;';
+            ico.innerHTML='<div class="icon-img">📝</div><span>日记残片_1.txt</span>';
+            ico.onclick=()=>openWin('notepadWin','日记残片_1.txt',gameData.texts.diary1);
+            document.getElementById('iconGrid').appendChild(ico);
+        }
     }
-    if (State.resonanceSynced || State.surveyPassed || State.colorSynced || State.viewedPhoto) {
+    if (State.resonanceSynced || State.surveyPassed || State.rebelSurveyPassed || State.colorSynced || State.viewedPhoto) {
         checkAbyssPuzzles(true); // silent mode
     }
     if (State.firewallRuleAdded) {
@@ -634,12 +658,14 @@ function runChkdsk() {
             playSuccessSound();
             toastOk('CHKDSK 完成，恢复了一个文件：日记残片_1.txt（已添加到桌面）');
             rc.innerHTML='<p style="color:green;">✓ 文件系统已修复。</p>';
-            const ico=document.createElement('div');
-            ico.className='icon'; ico.style.cssText='display:flex;';
-            ico.innerHTML='<div class="icon-img">📝</div><span>日记残片_1.txt</span>';
-            ico.onclick=()=>openWin('notepadWin','日记残片_1.txt',gameData.texts.diary1);
-            document.getElementById('iconGrid').appendChild(ico);
-            attachDrag; // icons don't need drag
+            if (!document.getElementById('ico_diary1')) {
+                const ico=document.createElement('div');
+                ico.id='ico_diary1';
+                ico.className='icon'; ico.style.cssText='display:flex;';
+                ico.innerHTML='<div class="icon-img">📝</div><span>日记残片_1.txt</span>';
+                ico.onclick=()=>openWin('notepadWin','日记残片_1.txt',gameData.texts.diary1);
+                document.getElementById('iconGrid').appendChild(ico);
+            }
             State.chkdskRun=true; saveState();
             closeWin('recycleWin');
         }
@@ -682,16 +708,11 @@ function showAeroIcons() {
 function switchToAero() {
     document.body.classList.add('frutiger-mode');
     State.stage='aero'; saveState();
-    // 隐藏一阶段图标
-    ['ico_pet1','ico_paint','ico_calc','ico_imgtut'].forEach(id=>{ const e=document.getElementById(id); if(e) e.style.display='none'; });
-    // 隐藏无ID的Win98图标（非Aero图标）
-    document.querySelectorAll('#iconGrid .icon').forEach(i=>{
-        if(i.id && i.id.startsWith('ico_') && !['ico_brief','ico_comp','ico_recycle','ico_srec','ico_net'].includes(i.id)) return;
-        if(!i.id) i.style.display='none';
-    });
-    // 隐藏全部ico_前缀的装饰图标
-    document.querySelectorAll('[id^="ico_"]').forEach(e=>e.style.display='none');
+    
+    // 调用独立的隐藏图标逻辑，不再误伤正常图标
+    hideWin98Icons();
     showAeroIcons();
+    
     document.querySelectorAll('.window').forEach(w=>{ w.style.display='none'; delete openWindows[w.id]; });
     updateTaskbar();
     const sm=document.getElementById('smLabel'); if(sm) sm.textContent='Terra OS';
@@ -826,7 +847,21 @@ function checkAbyssPuzzles(silent=false) {
 
 // ==================== 任务管理器 ====================
 let processes=[];
-function openTaskMgr(){ openWin('taskMgrWin'); renderProcesses(); }
+function openTaskMgr(){ 
+    // 每次打开任务管理器时动态生成当前环境下的进程列表
+    processes = [
+        { name: 'System Idle Process', user: 'SYSTEM', critical: false },
+        { name: 'explorer.exe', user: 'Ling', critical: false },
+        { name: 'taskmgr.exe', user: 'Ling', critical: false },
+        { name: 'svchost.exe', user: 'SYSTEM', critical: false }
+    ];
+    if (!State.wellnessTerminated) {
+        // 如果还未终止，将需要被强制结束的进程加入列表
+        processes.splice(1, 0, { name: 'Wellness.exe', user: 'SYSTEM', critical: true });
+    }
+    openWin('taskMgrWin'); 
+    renderProcesses(); 
+}
 function renderProcesses(){
     const el=document.getElementById('processList');
     el.innerHTML='<tr style="background:#c0c0c0;"><th style="padding:4px;text-align:left;">进程名</th><th>用户</th><th></th></tr>';
@@ -1140,7 +1175,7 @@ function calcInput(v){
     }
 }
 
-// ==================== 结局系统（全面重制）====================
+// ==================== 结局系统 ====================
 function triggerEnding(type){
     // 清理状态
     document.getElementById('desktop').style.display='none';
@@ -1254,4 +1289,4 @@ window.addEventListener('load',()=>{
     // BIOS焦点
     const bi=document.getElementById('biosInput'); if(bi) bi.focus();
 });
-
+--- END OF FILE text/javascript ---
