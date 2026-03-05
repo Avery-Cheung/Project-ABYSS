@@ -682,15 +682,15 @@ function showAeroIcons() {
 function switchToAero() {
     document.body.classList.add('frutiger-mode');
     State.stage='aero'; saveState();
-    // 隐藏一阶段图标
-    ['ico_pet1','ico_paint','ico_calc','ico_imgtut'].forEach(id=>{ const e=document.getElementById(id); if(e) e.style.display='none'; });
-    // 隐藏无ID的Win98图标（非Aero图标）
+    // 隐藏仅属于第一阶段的装饰性图标（画板、宠物入口、图片教程、计算器）
+    ['ico_pet1','ico_paint','ico_calc','ico_imgtut'].forEach(id=>{
+        const e=document.getElementById(id); if(e) e.style.display='none';
+    });
+    // 隐藏没有id的动态生成图标（chkdsk恢复的日记等无id图标）
     document.querySelectorAll('#iconGrid .icon').forEach(i=>{
-        if(i.id && i.id.startsWith('ico_') && !['ico_brief','ico_comp','ico_recycle','ico_srec','ico_net'].includes(i.id)) return;
         if(!i.id) i.style.display='none';
     });
-    // 隐藏全部ico_前缀的装饰图标
-    document.querySelectorAll('[id^="ico_"]').forEach(e=>e.style.display='none');
+    // 保留第一幕核心图标（ico_brief, ico_comp, ico_recycle, ico_srec, ico_net），显示第二幕新图标
     showAeroIcons();
     document.querySelectorAll('.window').forEach(w=>{ w.style.display='none'; delete openWindows[w.id]; });
     updateTaskbar();
@@ -825,7 +825,16 @@ function checkAbyssPuzzles(silent=false) {
 
 
 // ==================== 任务管理器 ====================
-let processes=[];
+// 进程列表（初始化时填充，critical=true 表示可被终止）
+let processes=[
+    { name:'System Idle Process', user:'SYSTEM',  critical:false },
+    { name:'explorer.exe',        user:'Ling',    critical:false },
+    { name:'taskmgr.exe',         user:'Ling',    critical:false },
+    { name:'notepad.exe',         user:'Ling',    critical:false },
+    { name:'Wellness.exe',        user:'TERRA',   critical:true  },
+    { name:'svchost.exe',         user:'SYSTEM',  critical:false },
+    { name:'terra_monitor.exe',   user:'TERRA',   critical:false },
+];
 function openTaskMgr(){ openWin('taskMgrWin'); renderProcesses(); }
 function renderProcesses(){
     const el=document.getElementById('processList');
